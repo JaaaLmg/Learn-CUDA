@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(nvcc --version)",
+      "Bash(cmake --version)",
+      "Bash(nvidia-smi -L)",
+      "Read(//usr/local/**)",
+      "Read(//usr/local/cuda-12.8/bin/**)",
+      "Read(//dev/**)",
+      "Read(//root/miniconda3/lib/**)",
+      "Bash(ldconfig -p)",
+      "Bash(apt-cache policy *)",
+      "Bash(nvidia-smi)",
+      "Bash(find / -name \"libblas*\")",
+      "Bash(find / -name \"libopenblas*\")",
+      "Read(//usr/local/cuda-12.8/**)",
+      "Bash(mkdir -p /root/Learn-CUDA/.vscode)",
+      "Bash(nvcc reduce_v0_global_memory.cu -o reduce_v0)",
+      "Bash(./reduce_v0)",
+      "Bash(/usr/local/cuda/bin/nvcc reduce_v0_global_memory.cu -o reduce_v0)",
+      "Bash(nvcc reduce_v0_global_memory.cu -o /tmp/reduce_v0)",
+      "Bash(/tmp/reduce_v0)"
+    ],
+    "additionalDirectories": [
+      "/root/Learn-CUDA"
+    ]
+  }
+}
