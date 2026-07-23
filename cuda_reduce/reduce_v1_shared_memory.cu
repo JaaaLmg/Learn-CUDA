@@ -7,7 +7,7 @@
 #define THREAD_PER_BLOCK 256
 
 
-__global__ void reduce0(float *d_in, float *d_out) {
+__global__ void reduce1(float *d_in, float *d_out) {
     int bid = blockIdx.x;
     int tid = threadIdx.x;
     int i = bid * blockDim.x + tid;
@@ -68,7 +68,7 @@ int main()
     cudaMemcpy(d_in, arr, N*sizeof(float), cudaMemcpyHostToDevice);
     dim3 Grid(block_num, 1);
     dim3 Block(THREAD_PER_BLOCK, 1);
-    reduce0<<<Grid, Block>>>(d_in, d_out);
+    reduce1<<<Grid, Block>>>(d_in, d_out);
     cudaMemcpy(out, d_out, block_num*sizeof(float), cudaMemcpyDeviceToHost);
 
     // print result

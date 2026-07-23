@@ -7,14 +7,14 @@
 #define THREAD_PER_BLOCK 256
 
 
-__global__ void reduce3(float *d_in, float *d_out) {
+__global__ void reduce4(float *d_in, float *d_out) {
     int bid = blockIdx.x;
     int tid = threadIdx.x;
-    int i = bid * blockDim.x + tid;
+    int i = bid * blockDim.x * 2 + tid;
     
     // allocate shared memory
     __shared__ float sdata[THREAD_PER_BLOCK];
-    sdata[tid] = d_in[i];
+    sdata[tid] = d_in[i] + d_in[i+THREAD_PER_BLOCK];    // load and add
     __syncthreads();
 
     // do reduction, try not to cause bank conflict
@@ -44,7 +44,8 @@ int main()
     float *d_in;
     cudaMalloc((void **)&d_in, N*sizeof(float));
 
-    int block_num = N/THREAD_PER_BLOCK;
+    int num_per_block = THREAD_PER_BLOCK * 2;   // num of data reduced per block
+    int block_num = N/num_per_block;
     float *out = (float *)malloc(block_num*sizeof(float));
     float *d_out;
     cudaMalloc((void **)&d_out, block_num*sizeof(float));
@@ -58,17 +59,17 @@ int main()
     // calculate on cpu
     for(int i=0; i<block_num; i++) {
         float curr = 0;
-        for(int j=0; j<THREAD_PER_BLOCK; j++) {
-            curr += arr[i*THREAD_PER_BLOCK+j];
+        for(int j=0; j<num_per_block; j++) {
+            curr += arr[i*num_per_block+j];
         }
         res[i] = curr;
     }
 
-    // calculate gpu
+    // calculate on gpu
     cudaMemcpy(d_in, arr, N*sizeof(float), cudaMemcpyHostToDevice);
     dim3 Grid(block_num, 1);
     dim3 Block(THREAD_PER_BLOCK, 1);
-    reduce3<<<Grid, Block>>>(d_in, d_out);
+    reduce4<<<Grid, Block>>>(d_in, d_out);
     cudaMemcpy(out, d_out, block_num*sizeof(float), cudaMemcpyDeviceToHost);
 
     // print result
