@@ -1,9 +1,9 @@
 {
     "cmake.configureSettings": {
-        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.8/bin/nvcc",
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda/bin/nvcc",
         "BLAS_LIBRARIES": "/usr/lib/x86_64-linux-gnu/libblas.so.3"
     },
     "cmake.environment": {
-        "PATH": "/usr/local/cuda-12.8/bin:${env:PATH}"
+        "PATH": "/usr/local/cuda/bin:${env:PATH}"
     }
 }
