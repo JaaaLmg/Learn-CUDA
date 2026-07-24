@@ -25,10 +25,14 @@
     } while (0)
 
 
-// 不同实现方法的开关
+#define FILE_ROOT "/root/Learn-CUDA/cuda_sgemm/results"
 
 // #define USE_CPU
 #define USE_CUDA_V0
+
+#if defined(USE_CUDA_V0)
+#define SGEMM_VERSION "v0"
+#endif
 
 
 void REF_MMult(int, int, int, float *, int, float *, int, float *, int);
@@ -57,14 +61,26 @@ int main()
     printf("GPU Device %d: \"%s\" with compute capability %d.%d\n\n", devID,
            deviceProp.name, deviceProp.major, deviceProp.minor);
 
+    // 仅在 GPU 路径下将结果写入对应版本的文件中
+    FILE *result_file = NULL;
+#ifdef SGEMM_VERSION
+    char result_filename[256];
+    snprintf(result_filename, sizeof(result_filename),
+             "%s/result_%s.txt", FILE_ROOT, SGEMM_VERSION);
+    result_file = fopen(result_filename, "w");
+    if (result_file == NULL)
+    {
+        fprintf(stderr, "Failed to open result file: %s\n", result_filename);
+        exit(EXIT_FAILURE);
+    }
+    fprintf(result_file, "p gflops diff\n");
+#endif
+
     int p, m, n, k, rep;
 
     double dtime, dtime_best, gflops, diff;
 
     float *a, *b, *c, *cref, *cold;
-
-    // cublasHandle_t handle;
-    // checkCudaErrors(cublasCreate(&handle));
 
     /* Time the "optimized" implementation */
     cudaEvent_t start, stop;
@@ -159,6 +175,11 @@ int main()
         }
         printf("%d %.2f %le \n", p, gflops, diff);
 
+        if (result_file != NULL)
+        {
+            fprintf(result_file, "%d %.2f %le\n", p, gflops, diff);
+        }
+
         free(a);
         free(b);
         free(c);
@@ -170,8 +191,10 @@ int main()
         checkCudaErrors(cudaFree(d_C));
     }
 
-    // Destroy the handle
-    // checkCudaErrors(cublasDestroy(handle));
+    if (result_file != NULL)
+    {
+        fclose(result_file);
+    }
 
     return 0;
 }
