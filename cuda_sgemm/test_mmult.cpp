@@ -24,10 +24,17 @@
         }                                                                   \
     } while (0)
 
-#define USE_CPU
+
+// 不同实现方法的开关
+
+// #define USE_CPU
+#define USE_CUDA_V0
+
 
 void REF_MMult(int, int, int, float *, int, float *, int, float *, int);
 void MY_MMult_baseline(int, int, int, float *, int, float *, int, float *, int);
+void MY_MMult_v0(int, int, int, float *, int, float *, int, float *, int);
+void MY_MMult(int, int, int, float *, int, float *, int, float *, int);
 // void copy_matrix(int, int, float *, int, float *, int);
 void random_matrix(int, int, float *, int);
 float compare_matrices(int, int, float *, int, float *, int);
@@ -116,7 +123,9 @@ int main()
         auto cpu_stop = std::chrono::steady_clock::now();
         msecTotal =
             std::chrono::duration<float, std::milli>(cpu_stop - cpu_start).count();
-#else
+#endif
+
+#ifdef USE_CUDA_V0
         // GPU 路径用 CUDA event 计时（记录 stream 上的时间戳）。
         checkCudaErrors(cudaEventRecord(start, NULL));
         for (rep = 0; rep < NREPEATS; rep++)
@@ -129,6 +138,7 @@ int main()
         checkCudaErrors(cudaEventSynchronize(stop));
         checkCudaErrors(cudaEventElapsedTime(&msecTotal, start, stop));
 #endif
+
 
         // Compute and print the performance
         float msecPerMatrixMul = msecTotal / NREPEATS;

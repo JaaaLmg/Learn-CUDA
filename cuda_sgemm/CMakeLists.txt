@@ -30,15 +30,16 @@ message(STATUS "cuda_sgemm 使用的 BLAS 库: ${SGEMM_BLAS_LIBRARY}")
 #   - MY_MMult   (sgemm_baseline_cpu.cpp): 待验证的 CPU 朴素实现
 #   - random_matrix / compare_matrices  : 生成随机矩阵、比较结果
 # 驱动里用到 cudaEvent 计时和设备查询，因此仍需链接 CUDA runtime。
-add_executable(sgemm_cpu
+add_executable(sgemm_test
     test_mmult.cpp
     ref_mmult.cpp
-    sgemm_baseline_cpu.cpp
     random_matrix.cpp
     compare_metrics.cpp
+    sgemm_baseline_cpu.cpp
+    sgemm_v0_global_memory.cu
 )
-target_include_directories(sgemm_cpu PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
-target_link_libraries(sgemm_cpu PRIVATE
+target_include_directories(sgemm_test PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
+target_link_libraries(sgemm_test PRIVATE
     CUDA::cudart
     ${SGEMM_BLAS_LIBRARY}
 )
