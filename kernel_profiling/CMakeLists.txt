@@ -1,0 +1,6 @@
+add_executable(combined_memory_access combined_memory_access.cu)
+target_link_libraries(combined_memory_access PRIVATE CUDA::cudart ${CUDA_cublas_LIBRARY})
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(combined_memory_access PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-G>)
+endif()
+target_compile_options(combined_memory_access PRIVATE -lineinfo)

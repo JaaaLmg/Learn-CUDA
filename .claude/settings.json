@@ -19,7 +19,11 @@
       "Bash(./reduce_v0)",
       "Bash(/usr/local/cuda/bin/nvcc reduce_v0_global_memory.cu -o reduce_v0)",
       "Bash(nvcc reduce_v0_global_memory.cu -o /tmp/reduce_v0)",
-      "Bash(/tmp/reduce_v0)"
+      "Bash(/tmp/reduce_v0)",
+      "Bash(ncu --target-processes all --set full -o combined_memory_report_test /root/Learn-CUDA/build/kernel_profiling/combined_memory_access)",
+      "Bash(nvprof --version)",
+      "Bash(nvprof /root/Learn-CUDA/build/kernel_profiling/combined_memory_access)",
+      "Bash(nvprof -o combined_memory_report.nvvp /root/Learn-CUDA/build/kernel_profiling/combined_memory_access)"
     ],
     "additionalDirectories": [
       "/root/Learn-CUDA"
