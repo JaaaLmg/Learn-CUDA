@@ -4,16 +4,30 @@
 
 #include "parameters.h"
 
+#include <chrono>
+
 // CUDA runtime
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
 
+// 本机没有 CUDA samples 的 helper_cuda.h，这里提供一个等价的轻量宏：
+// 检查 CUDA runtime 调用返回值，出错时打印位置并退出。
+#define checkCudaErrors(call)                                               \
+    do                                                                      \
+    {                                                                       \
+        cudaError_t err__ = (call);                                         \
+        if (err__ != cudaSuccess)                                           \
+        {                                                                   \
+            fprintf(stderr, "CUDA error %s:%d: '%s'\n", __FILE__, __LINE__, \
+                    cudaGetErrorString(err__));                             \
+            exit(EXIT_FAILURE);                                             \
+        }                                                                   \
+    } while (0)
 
 #define USE_CPU
 
 void REF_MMult(int, int, int, float *, int, float *, int, float *, int);
-void MY_MMult(int, int, int, float *, int, float *, int,
-              float *, int);
+void MY_MMult_baseline(int, int, int, float *, int, float *, int, float *, int);
 // void copy_matrix(int, int, float *, int, float *, int);
 void random_matrix(int, int, float *, int);
 float compare_matrices(int, int, float *, int, float *, int);
@@ -57,8 +71,6 @@ int main()
         n = (N == -1 ? p : N);
         k = (K == -1 ? p : K);
 
-        gflops = 2.0 * m * n * k * 1.0e-09;
-
         const int lda = k, ldb = n, ldc = n;
 
         /* Allocate space for the matrices */
@@ -92,30 +104,36 @@ int main()
 
         REF_MMult(m, n, k, a, lda, b, ldb, cref, ldc);
 
-        // Record the start event
-        checkCudaErrors(cudaEventRecord(start, NULL));
+        float msecTotal = 0.0f;
 
+#ifdef USE_CPU
+        // CPU 计算不在 GPU stream 上，用 std::chrono 的墙钟时间才准确。
+        auto cpu_start = std::chrono::steady_clock::now();
         for (rep = 0; rep < NREPEATS; rep++)
         {
-#ifdef USE_CPU
-            MY_MMult(m, n, k, a, k, b, n, cold, n);
-#else
-            /* Time your implementation */
-            MY_MMult(m, n, k, d_A, k, d_B, n, d_C, n);
-#endif
+            MY_MMult_baseline(m, n, k, a, k, b, n, cold, n);
         }
-
-        // Record the stop event
+        auto cpu_stop = std::chrono::steady_clock::now();
+        msecTotal =
+            std::chrono::duration<float, std::milli>(cpu_stop - cpu_start).count();
+#else
+        // GPU 路径用 CUDA event 计时（记录 stream 上的时间戳）。
+        checkCudaErrors(cudaEventRecord(start, NULL));
+        for (rep = 0; rep < NREPEATS; rep++)
+        {
+            /* Time your implementation */
+            MY_MMult_v0(m, n, k, d_A, k, d_B, n, d_C, n);
+        }
         checkCudaErrors(cudaEventRecord(stop, NULL));
         // Wait for the stop event to complete
         checkCudaErrors(cudaEventSynchronize(stop));
-        float msecTotal = 0.0f;
         checkCudaErrors(cudaEventElapsedTime(&msecTotal, start, stop));
+#endif
 
         // Compute and print the performance
         float msecPerMatrixMul = msecTotal / NREPEATS;
         double flopsPerMatrixMul = 2.0 * m * k * n;
-        double gflops =
+        gflops =
             (flopsPerMatrixMul * 1.0e-9f) / (msecPerMatrixMul / 1000.0f);
 
 #ifndef USE_CPU
@@ -145,6 +163,5 @@ int main()
     // Destroy the handle
     // checkCudaErrors(cublasDestroy(handle));
 
-    printf("];\n");
     return 0;
 }

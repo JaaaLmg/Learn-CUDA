@@ -2,7 +2,7 @@
  * cpu 实现
  */
 
-void MY_MMult(int m, int n, int k, float *A, int lda, float *B, int ldb, float *C, int ldc)
+void MY_MMult_baseline(int m, int n, int k, float *A, int lda, float *B, int ldb, float *C, int ldc)
 {
 
     for (int r = 0; r < m; r++)
@@ -12,9 +12,9 @@ void MY_MMult(int m, int n, int k, float *A, int lda, float *B, int ldb, float *
             float temp = 0.0f;
             for (int i = 0; i < k; i++)
             {
-                temp += A[r * k + i] * B[i * n + c];
+                temp += A[r * lda + i] * B[i * ldb + c];
             }
-            C[r * k + c] = temp;
+            C[r * ldc + c] = temp;
         }
     }
 }
